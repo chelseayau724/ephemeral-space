@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 空间
+model Space {
+  id          String   @id @default(cuid())
+  code        String   @unique // 四位数字暗号
+  name        String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime // 到期销毁时间
+  isArchived  Boolean  @default(false) // 是否存档（仅统计）
+
+  // 组织者自定义配置
+  customFields       String // JSON: 启用的名片栏位
+  entranceQuestion   String? // 入场问题
+  questionRequired   Boolean @default(false)
+
+  // 关联
+  participants Participant[]
+
+  @@index([code])
+  @@index([expiresAt])
+}
+
+// 参与者
+model Participant {
+  id             String   @id @default(cuid())
+  spaceId        String
+  space          Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  nickname       String
+  status         String // 'chatting' | 'listening' | 'nervous'
+  ootdImageUrl   String? // OOTD图片（保留兼容）
+  avatarConfig   String? // 8bit像素小人配置（JSON）
+  entranceAnswer String? // 入场问题回答
+
+  joinedAt       DateTime @default(now())
+  leftAt         DateTime?
+  isOnline       Boolean  @default(true)
+
+  // 关联
+  tags ParticipantTag[]
+
+  @@index([spaceId])
+  @@index([joinedAt])
+}
+
+// 参与者标签
+model ParticipantTag {
+  id            String     @id @default(cuid())
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  tag           String
+
+  @@unique([participantId, tag])
+}
+
+// 个人印记（私人记录）
+model PersonalArchive {
+  id                  String   @id @default(cuid())
+  spaceCode           String
+  spaceName           String
+  participantNickname String
+  ootdImageUrl        String? // OOTD图片（保留兼容）
+  avatarConfig        String? // 8bit像素小人配置（JSON）
+  visitedAt           DateTime @default(now())
+
+  @@index([visitedAt])
+}

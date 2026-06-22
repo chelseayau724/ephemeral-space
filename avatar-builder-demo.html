@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>在场 - 拼一个今晚的你</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* 顶部栏 */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #333;
+      background: #111;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .top-bar-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .top-bar-btn {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .top-bar-btn.primary {
+      color: #4ECDC4;
+    }
+
+    /* 预览区 */
+    .preview-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+      min-height: 350px;
+    }
+
+    .avatar-canvas {
+      image-rendering: pixelated;
+      shape-rendering: crispEdges;
+    }
+
+    /* 名称编辑 */
+    .name-edit {
+      padding: 10px 20px;
+      background: #222;
+      border-radius: 8px;
+      color: #888;
+      font-size: 14px;
+      cursor: pointer;
+      border: 1px solid #333;
+      margin-top: 24px;
+      transition: all 0.2s;
+    }
+
+    .name-edit:hover {
+      border-color: #4ECDC4;
+      color: #4ECDC4;
+    }
+
+    /* 选项卡 */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 12px 16px;
+      overflow-x: auto;
+      border-bottom: 1px solid #222;
+      background: #111;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab {
+      padding: 8px 14px;
+      background: #222;
+      color: #888;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: #4ECDC4;
+      color: #000;
+    }
+
+    /* 选项列表 */
+    .options-area {
+      background: #111;
+      max-height: 45vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .options-grid.cols-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .options-grid.cols-4 {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .option-btn {
+      padding: 14px 10px;
+      background: #1a1a1a;
+      border: 2px solid #222;
+      border-radius: 12px;
+      color: #fff;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+
+    .option-btn:hover {
+      border-color: #444;
+    }
+
+    .option-btn.selected {
+      border-color: #4ECDC4;
+      background: #2a2a2a;
+    }
+
+    /* 颜色选项 */
+    .color-option {
+      padding: 14px;
+      background: #1a1a1a;
+      border: 2px solid #222;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .color-option:hover {
+      border-color: #444;
+    }
+
+    .color-option.selected {
+      border-color: #4ECDC4;
+      background: #2a2a2a;
+    }
+
+    .color-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .color-option.selected .color-name {
+      color: #4ECDC4;
+    }
+
+    .color-swatches {
+      display: flex;
+      gap: 4px;
+    }
+
+    .color-swatch {
+      flex: 1;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid #333;
+    }
+
+    /* 配饰计数器 */
+    .accessory-counter {
+      color: #888;
+      font-size: 13px;
+      padding: 16px 16px 8px;
+    }
+
+    /* 完成按钮 */
+    .complete-btn {
+      width: 100%;
+      padding: 16px;
+      background: #4ECDC4;
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* 提示 */
+    .tip {
+      padding: 12px 16px;
+      background: #1a1a1a;
+      color: #666;
+      font-size: 12px;
+      text-align: center;
+      border-top: 1px solid #222;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- 8bit小人组装器 -->
+    <div id="page-avatar-builder" class="page active">
+      <!-- 顶部栏 -->
+      <div class="top-bar">
+        <button class="top-bar-btn" onclick="closeBuilder()">✕ 关闭</button>
+        <div class="top-bar-title">拼一个今晚的你</div>
+        <button class="top-bar-btn primary" onclick="saveToWardrobe()">💾 保存</button>
+      </div>
+
+      <!-- 预览区 -->
+      <div class="preview-area">
+        <canvas id="avatar-canvas" class="avatar-canvas" width="256" height="512"></canvas>
+        <div class="name-edit" onclick="editName()">
+          你命名为："<span id="avatar-name">卫衣小人</span>"
+        </div>
+      </div>
+
+      <!-- 选项卡 -->
+      <div class="tabs">
+        <button class="tab active" data-tab="body" onclick="switchTab('body')">体型</button>
+        <button class="tab" data-tab="hair" onclick="switchTab('hair')">发型</button>
+        <button class="tab" data-tab="top" onclick="switchTab('top')">上衣</button>
+        <button class="tab" data-tab="bottom" onclick="switchTab('bottom')">下装</button>
+        <button class="tab" data-tab="shoes" onclick="switchTab('shoes')">鞋子</button>
+        <button class="tab" data-tab="accessories" onclick="switchTab('accessories')">配饰</button>
+        <button class="tab" data-tab="colors" onclick="switchTab('colors')">配色</button>
+      </div>
+
+      <!-- 选项列表 -->
+      <div class="options-area">
+        <!-- 体型 -->
+        <div id="options-body" class="options-grid">
+          <button class="option-btn" data-value="medium" onclick="selectOption('body', 'medium')">
+            <div>中等</div>
+          </button>
+          <button class="option-btn" data-value="tall" onclick="selectOption('body', 'tall')">
+            <div>高瘦</div>
+          </button>
+          <button class="option-btn" data-value="round" onclick="selectOption('body', 'round')">
+            <div>圆润</div>
+          </button>
+          <button class="option-btn" data-value="small" onclick="selectOption('body', 'small')">
+            <div>娇小</div>
+          </button>
+        </div>
+
+        <!-- 发型 -->
+        <div id="options-hair" class="options-grid cols-3" style="display: none;">
+          <button class="option-btn" data-value="short-straight" onclick="selectOption('hair', 'short-straight')">短发（直）</button>
+          <button class="option-btn" data-value="short-curly" onclick="selectOption('hair', 'short-curly')">短发（卷）</button>
+          <button class="option-btn selected" data-value="long-straight" onclick="selectOption('hair', 'long-straight')">长发（直）</button>
+          <button class="option-btn" data-value="long-wavy" onclick="selectOption('hair', 'long-wavy')">长发（波浪）</button>
+          <button class="option-btn" data-value="bun" onclick="selectOption('hair', 'bun')">丸子头</button>
+          <button class="option-btn" data-value="crew-cut" onclick="selectOption('hair', 'crew-cut')">寸头</button>
+          <button class="option-btn" data-value="bald" onclick="selectOption('hair', 'bald')">光头</button>
+          <button class="option-btn" data-value="ponytail" onclick="selectOption('hair', 'ponytail')">马尾</button>
+        </div>
+
+        <!-- 上衣 -->
+        <div id="options-top" class="options-grid cols-3" style="display: none;">
+          <button class="option-btn selected" data-value="tshirt" onclick="selectOption('top', 'tshirt')">T恤</button>
+          <button class="option-btn" data-value="hoodie" onclick="selectOption('top', 'hoodie')">卫衣</button>
+          <button class="option-btn" data-value="shirt" onclick="selectOption('top', 'shirt')">衬衫</button>
+          <button class="option-btn" data-value="blazer" onclick="selectOption('top', 'blazer')">西装外套</button>
+          <button class="option-btn" data-value="dress" onclick="selectOption('top', 'dress')">连衣裙</button>
+          <button class="option-btn" data-value="tank" onclick="selectOption('top', 'tank')">背心</button>
+          <button class="option-btn" data-value="coat" onclick="selectOption('top', 'coat')">风衣</button>
+          <button class="option-btn" data-value="sweater" onclick="selectOption('top', 'sweater')">毛衣</button>
+        </div>
+
+        <!-- 下装 -->
+        <div id="options-bottom" class="options-grid cols-3" style="display: none;">
+          <button class="option-btn selected" data-value="pants" onclick="selectOption('bottom', 'pants')">长裤</button>
+          <button class="option-btn" data-value="shorts" onclick="selectOption('bottom', 'shorts')">短裤</button>
+          <button class="option-btn" data-value="skirt" onclick="selectOption('bottom', 'skirt')">裙子</button>
+          <button class="option-btn" data-value="wide-pants" onclick="selectOption('bottom', 'wide-pants')">阔腿裤</button>
+          <button class="option-btn" data-value="jeans" onclick="selectOption('bottom', 'jeans')">牛仔裤</button>
+        </div>
+
+        <!-- 鞋子 -->
+        <div id="options-shoes" class="options-grid cols-3" style="display: none;">
+          <button class="option-btn selected" data-value="sneakers" onclick="selectOption('shoes', 'sneakers')">运动鞋</button>
+          <button class="option-btn" data-value="canvas" onclick="selectOption('shoes', 'canvas')">帆布鞋</button>
+          <button class="option-btn" data-value="leather" onclick="selectOption('shoes', 'leather')">皮鞋</button>
+          <button class="option-btn" data-value="boots" onclick="selectOption('shoes', 'boots')">靴子</button>
+          <button class="option-btn" data-value="sandals" onclick="selectOption('shoes', 'sandals')">凉鞋</button>
+        </div>
+
+        <!-- 配饰 -->
+        <div id="options-accessories" style="display: none;">
+          <div class="accessory-counter">已选 <span id="accessory-count">0</span>/2</div>
+          <div class="options-grid cols-3">
+            <button class="option-btn" data-value="glasses-round" onclick="toggleAccessory('glasses-round')">眼镜（圆框）</button>
+            <button class="option-btn" data-value="glasses-square" onclick="toggleAccessory('glasses-square')">眼镜（方框）</button>
+            <button class="option-btn" data-value="hat-baseball" onclick="toggleAccessory('hat-baseball')">棒球帽</button>
+            <button class="option-btn" data-value="hat-beanie" onclick="toggleAccessory('hat-beanie')">毛线帽</button>
+            <button class="option-btn" data-value="hat-bucket" onclick="toggleAccessory('hat-bucket')">渔夫帽</button>
+            <button class="option-btn" data-value="headphones-over" onclick="toggleAccessory('headphones-over')">头戴式耳机</button>
+            <button class="option-btn" data-value="headphones-neck" onclick="toggleAccessory('headphones-neck')">颈挂式耳机</button>
+            <button class="option-btn" data-value="bag-crossbody" onclick="toggleAccessory('bag-crossbody')">斜挎包</button>
+            <button class="option-btn" data-value="bag-backpack" onclick="toggleAccessory('bag-backpack')">双肩包</button>
+            <button class="option-btn" data-value="bag-tote" onclick="toggleAccessory('bag-tote')">托特包</button>
+            <button class="option-btn" data-value="bracelet" onclick="toggleAccessory('bracelet')">手环</button>
+            <button class="option-btn" data-value="mask" onclick="toggleAccessory('mask')">口罩</button>
+            <button class="option-btn" data-value="pet-cat" onclick="toggleAccessory('pet-cat')">小猫</button>
+            <button class="option-btn" data-value="pet-dog" onclick="toggleAccessory('pet-dog')">小狗</button>
+          </div>
+        </div>
+
+        <!-- 配色 -->
+        <div id="options-colors" style="display: none; padding: 16px;">
+          <div class="options-grid" style="grid-template-columns: repeat(2, 1fr);">
+            <button class="color-option selected" data-value="all-black" onclick="selectColor('all-black')">
+              <div class="color-name">全黑系</div>
+              <div class="color-swatches">
+                <div class="color-swatch" style="background: #1a1a1a;"></div>
+                <div class="color-swatch" style="background: #2d2d2d;"></div>
+                <div class="color-swatch" style="background: #404040;"></div>
+              </div>
+            </button>
+            <button class="color-option" data-value="earth" onclick="selectColor('earth')">
+              <div class="color-name">大地色系</div>
+              <div class="color-swatches">
+                <div class="color-swatch" style="background: #8B4513;"></div>
+                <div class="color-swatch" style="background: #D2691E;"></div>
+                <div class="color-swatch" style="background: #DEB887;"></div>
+              </div>
+            </button>
+            <button class="color-option" data-value="blue" onclick="selectColor('blue')">
+              <div class="color-name">蓝色系</div>
+              <div class="color-swatches">
+                <div class="color-swatch" style="background: #1E3A5F;"></div>
+                <div class="color-swatch" style="background: #3B82F6;"></div>
+                <div class="color-swatch" style="background: #60A5FA;"></div>
+              </div>
+            </button>
+            <button class="color-option" data-value="red-accent" onclick="selectColor('red-accent')">
+              <div class="color-name">红色点缀</div>
+              <div class="color-swatches">
+                <div class="color-swatch" style="background: #DC2626;"></div>
+                <div class="color-swatch" style="background: #F87171;"></div>
+                <div class="color-swatch" style="background: #FEE2E2;"></div>
+              </div>
+            </button>
+            <button class="color-option" data-value="green" onclick="selectColor('green')">
+              <div class="color-name">绿色系</div>
+              <div class="color-swatches">
+                <div class="color-swatch" style="background: #065F46;"></div>
+                <div class="color-swatch" style="background: #10B981;"></div>
+                <div class="color-swatch" style="background: #6EE7B7;"></div>
+              </div>
+            </button>
+            <button class="color-option" data-value="yellow" onclick="selectColor('yellow')">
+              <div class="color-name">黄色跳色</div>
+              <div class="color-swatches">
+                <div class="color-swatch" style="background: #F59E0B;"></div>
+                <div class="color-swatch" style="background: #FCD34D;"></div>
+                <div class="color-swatch" style="background: #FEF3C7;"></div>
+              </div>
+            </button>
+            <button class="color-option" data-value="pink-purple" onclick="selectColor('pink-purple')">
+              <div class="color-name">粉紫系</div>
+              <div class="color-swatches">
+                <div class="color-swatch" style="background: #BE185D;"></div>
+                <div class="color-swatch" style="background: #EC4899;"></div>
+                <div class="color-swatch" style="background: #FBCFE8;"></div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 完成按钮 -->
+      <button class="complete-btn" onclick="completeAvatar()">
+        完成 ✨
+      </button>
+    </div>
+
+    <!-- 成功页面 -->
+    <div id="page-success" class="page">
+      <div style="text-align: center; padding: 60px 20px;">
+        <div style="font-size: 60px; margin-bottom: 20px;">✓</div>
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 12px;">完成！</h2>
+        <p style="color: #888; margin-bottom: 32px;">你的8bit形象已保存</p>
+        <canvas id="result-avatar" width="128" height="256" style="image-rendering: pixelated; margin: 0 auto 24px;"></canvas>
+        <div style="color: #888; margin-bottom: 32px;">
+          <span id="result-name">卫衣小人</span>
+        </div>
+        <button onclick="showPage('page-join')" style="padding: 14px 32px; background: #4ECDC4; color: #000; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
+          返回名片页
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 当前配置
+    let config = {
+      body: 'medium',
+      hair: 'long-straight',
+      top: 'tshirt',
+      bottom: 'pants',
+      shoes: 'sneakers',
+      accessories: [],
+      colorScheme: 'all-black'
+    };
+
+    // 配色方案
+    const colorSchemes = {
+      'all-black': ['#1a1a1a', '#2d2d2d', '#404040'],
+      'earth': ['#8B4513', '#D2691E', '#DEB887'],
+      'blue': ['#1E3A5F', '#3B82F6', '#60A5FA'],
+      'red-accent': ['#DC2626', '#F87171', '#FEE2E2'],
+      'green': ['#065F46', '#10B981', '#6EE7B7'],
+      'yellow': ['#F59E0B', '#FCD34D', '#FEF3C7'],
+      'pink-purple': ['#BE185D', '#EC4899', '#FBCFE8']
+    };
+
+    // 上衣名称映射
+    const topNames = {
+      'tshirt': 'T恤',
+      'hoodie': '卫衣',
+      'shirt': '衬衫',
+      'blazer': '西装外套',
+      'dress': '连衣裙',
+      'tank': '背心',
+      'coat': '风衣',
+      'sweater': '毛衣'
+    };
+
+    // 绘制像素小人 - 修复版
+    function drawAvatar() {
+      const canvas = document.getElementById('avatar-canvas');
+      const ctx = canvas.getContext('2d');
+      const colors = colorSchemes[config.colorScheme];
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 缩放因子
+      const scale = 4;
+      const offsetX = canvas.width / 2 - 32 * scale;
+      const offsetY = 20;
+
+      // 辅助函数：绘制像素块
+      function pixel(x, y, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(offsetX + x * scale, offsetY + y * scale, scale, scale);
+      }
+
+      const primary = colors[0];
+      const secondary = colors[1];
+      const accent = colors[2];
+
+      // 体型缩放
+      let bodyScale = 1.0;
+      let heightOffset = 0;
+
+      if (config.body === 'tall') {
+        bodyScale = 1.2;
+        heightOffset = -20;
+      } else if (config.body === 'round') {
+        bodyScale = 1.1;
+      } else if (config.body === 'small') {
+        bodyScale = 0.85;
+        heightOffset = 15;
+      }
+
+      // 绘制头部
+      for (let x = 24; x < 40; x++) {
+        for (let y = 4; y < 20; y++) {
+          pixel(x, y, primary);
+        }
+      }
+
+      // 脖子
+      for (let x = 28; x < 36; x++) {
+        for (let y = 20; y < 24; y++) {
+          pixel(x, y, primary);
+        }
+      }
+
+      // 躯干
+      for (let x = 22; x < 42; x++) {
+        for (let y = 24; y < 52; y++) {
+          pixel(x, y, primary);
+        }
+      }
+
+      // 袖子
+      for (let x = 14; x < 22; x++) {
+        for (let y = 24; y < 44; y++) {
+          pixel(x, y, primary);
+        }
+      }
+      // 修复：x < 50 而不是 y++
+      for (let x = 42; x < 50; x++) {
+        for (let y = 24; y < 44; y++) {
+          pixel(x, y, primary);
+        }
+      }
+
+      // 下装
+      if (config.bottom === 'skirt') {
+        // 裙子
+        for (let x = 20; x < 44; x++) {
+          for (let y = 52; y < 60; y++) {
+            pixel(x, y, primary);
+          }
+        }
+        for (let x = 16; x < 48; x++) {
+          for (let y = 60; y < 72; y++) {
+            pixel(x, y, primary);
+          }
+        }
+      } else if (config.bottom === 'shorts') {
+        // 短裤
+        for (let x = 22; x < 42; x++) {
+          for (let y = 52; y < 64; y++) {
+            pixel(x, y, primary);
+          }
+        }
+        for (let x = 16; x < 28; x++) {
+          for (let y = 64; y < 68; y++) {
+            pixel(x, y, primary);
+          }
+        }
+        for (let x = 36; x < 48; x++) {
+          for (let y = 64; y < 68; y++) {
+            pixel(x, y, primary);
+          }
+        }
+      } else {
+        // 长裤
+        for (let x = 22; x < 30; x++) {
+          for (let y = 52; y < 84; y++) {
+            pixel(x, y, primary);
+          }
+        }
+        for (let x = 34; x < 42; x++) {
+          for (let y = 52; y < 84; y++) {
+            pixel(x, y, primary);
+          }
+        }
+      }
+
+      // 鞋子
+      if (config.shoes === 'boots') {
+        for (let x = 16; x < 28; x++) {
+          for (let y = 84; y < 96; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 36; x < 48; x++) {
+          for (let y = 84; y < 96; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+      } else if (config.shoes === 'sandals') {
+        for (let x = 20; x < 28; x++) {
+          for (let y = 88; y < 92; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 36; x < 44; x++) {
+          for (let y = 88; y < 92; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+      } else {
+        for (let x = 18; x < 30; x++) {
+          for (let y = 86; y < 92; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 34; x < 46; x++) {
+          for (let y = 86; y < 92; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+      }
+
+      // 发型
+      if (config.hair === 'bald') {
+        // 光头 - 不绘制
+      } else if (config.hair === 'crew-cut') {
+        for (let x = 24; x < 40; x++) {
+          for (let y = 2; y < 8; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+      } else if (config.hair === 'short-straight') {
+        for (let x = 22; x < 42; x++) {
+          for (let y = 2; y < 10; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+      } else if (config.hair === 'short-curly') {
+        for (let x = 22; x < 42; x++) {
+          for (let y = 2; y < 12; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+      } else if (config.hair === 'long-straight') {
+        for (let x = 22; x < 42; x++) {
+          for (let y = 2; y < 10; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 20; x < 24; x++) {
+          for (let y = 10; y < 34; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 40; x < 44; x++) {
+          for (let y = 10; y < 34; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+      } else if (config.hair === 'long-wavy') {
+        for (let x = 22; x < 42; x++) {
+          for (let y = 2; y < 10; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 18; x < 22; x++) {
+          for (let y = 12; y < 32; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 42; x < 46; x++) {
+          for (let y = 12; y < 32; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+      } else if (config.hair === 'bun') {
+        for (let x = 22; x < 42; x++) {
+          for (let y = 2; y < 10; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 26; x < 38; x++) {
+          for (let y = -8; y < 2; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+      } else if (config.hair === 'ponytail') {
+        for (let x = 22; x < 42; x++) {
+          for (let y = 2; y < 10; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 42; x < 50; x++) {
+          for (let y = 10; y < 26; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+      }
+
+      // 配饰
+      if (config.accessories.includes('glasses-round')) {
+        // 圆框眼镜
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(30 * scale, 12 * scale, 8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(38 * scale, 12 * scale, 8, 0, Math.PI * 2);
+        ctx.stroke();
+        // 鼻梁
+        ctx.beginPath();
+        ctx.moveTo(38 * scale, 12 * scale);
+        ctx.lineTo(30 * scale, 12 * scale);
+        ctx.stroke();
+      }
+
+      if (config.accessories.includes('glasses-square')) {
+        // 方框眼镜
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(22 * scale, 10 * scale, 14 * scale, 10 * scale);
+        ctx.strokeRect(36 * scale, 10 * scale, 14 * scale, 10 * scale);
+        // 鼻梁
+        ctx.beginPath();
+        ctx.moveTo(36 * scale, 15 * scale);
+        ctx.lineTo(32 * scale, 15 * scale);
+        ctx.stroke();
+      }
+
+      if (config.accessories.includes('hat-baseball')) {
+        // 棒球帽
+        for (let x = 20; x < 44; x++) {
+          for (let y = 0; y < 6; y++) {
+            pixel(x, y, accent);
+          }
+        }
+        for (let x = 14; x < 50; x++) {
+          for (let y = 6; y < 10; y++) {
+            pixel(x, y, accent);
+          }
+        }
+      }
+
+      if (config.accessories.includes('hat-beanie')) {
+        // 毛线帽
+        for (let x = 20; x < 44; x++) {
+          for (let y = 0; y < 12; y++) {
+            pixel(x, y, accent);
+          }
+        }
+        for (let x = 18; x < 22; x++) {
+          for (let y = 8; y < 16; y++) {
+            pixel(x, y, accent);
+          }
+        }
+        for (let x = 42; x < 46; x++) {
+          for (let y = 8; y < 16; y++) {
+            pixel(x, y, accent);
+          }
+        }
+      }
+
+      if (config.accessories.includes('hat-bucket')) {
+        // 渔夫帽
+        for (let x = 18; x < 46; x++) {
+          for (let y = 2; y < 10; y++) {
+            pixel(x, y, accent);
+          }
+        }
+        for (let x = 14; x < 50; x++) {
+          for (let y = 10; y < 14; y++) {
+            pixel(x, y, accent);
+          }
+        }
+      }
+
+      if (config.accessories.includes('headphones-over')) {
+        // 头戴式耳机
+        for (let x = 16; x < 20; x++) {
+          for (let y = 6; y < 20; y++) {
+            pixel(x, y, accent);
+          }
+        }
+        for (let x = 44; x < 48; x++) {
+          for (let y = 6; y < 20; y++) {
+            pixel(x, y, accent);
+          }
+        }
+        for (let y = 4; y < 8; y++) {
+          pixel(16, y, accent);
+          pixel(48, y, accent);
+        }
+      }
+
+      if (config.accessories.includes('headphones-neck')) {
+        // 颈挂式耳机
+        for (let x = 20; x < 44; x++) {
+          for (let y = 20; y < 24; y++) {
+            pixel(x, y, accent);
+          }
+        }
+        for (let x = 18; x < 22; x++) {
+          for (let y = 24; y < 30; y++) {
+            pixel(x, y, accent);
+          }
+        }
+        for (let x = 42; x < 46; x++) {
+          for (let y = 24; y < 30; y++) {
+            pixel(x, y, accent);
+          }
+        }
+      }
+
+      if (config.accessories.includes('bag-crossbody')) {
+        // 斜挎包
+        for (let x = 12; x < 28; x++) {
+          for (let y = 36; y < 52; y++) {
+            pixel(x, y, accent);
+          }
+        }
+      }
+
+      if (config.accessories.includes('bag-backpack')) {
+        // 双肩包
+        for (let x = 42; x < 52; x++) {
+          for (let y = 26; y < 48; y++) {
+            pixel(x, y, accent);
+          }
+        }
+      }
+
+      if (config.accessories.includes('bag-tote')) {
+        // 托特包
+        for (let x = 12; x < 28; x++) {
+          for (let y = 40; y < 52; y++) {
+            pixel(x, y, accent);
+          }
+        }
+      }
+
+      if (config.accessories.includes('bracelet')) {
+        // 手环
+        for (let x = 44; x < 48; x++) {
+          for (let y = 42; y < 46; y++) {
+            pixel(x, y, accent);
+          }
+        }
+      }
+
+      if (config.accessories.includes('mask')) {
+        // 口罩
+        for (let x = 24; x < 40; x++) {
+          for (let y = 16; y < 22; y++) {
+            pixel(x, y, accent);
+          }
+        }
+      }
+
+      if (config.accessories.includes('pet-cat')) {
+        // 小猫
+        for (let x = 52; x < 60; x++) {
+          for (let y = 88; y < 96; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 54; x < 58; x++) {
+          for (let y = 84; y < 88; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        // 耳朵
+        pixel(54, 82, secondary);
+        pixel(57, 82, secondary);
+      }
+
+      if (config.accessories.includes('pet-dog')) {
+        // 小狗
+        for (let x = 52; x < 64; x++) {
+          for (let y = 88; y < 98; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 52; x < 56; x++) {
+          for (let y = 84; y < 90; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+        for (let x = 60; x < 64; x++) {
+          for (let y = 84; y < 90; y++) {
+            pixel(x, y, secondary);
+          }
+        }
+      }
+
+      // 更新名称
+      const topName = topNames[config.top] || '小人';
+      document.getElementById('avatar-name').textContent = topName + '小人';
+    }
+
+    // 切换标签
+    function switchTab(tab) {
+      // 更新标签状态
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.remove('active');
+        if (t.dataset.tab === tab) {
+          t.classList.add('active');
+        }
+      });
+
+      // 显示对应选项
+      document.querySelectorAll('.options-area > div').forEach(div => {
+        div.style.display = 'none';
+      });
+      document.getElementById(`options-${tab}`).style.display = 'block';
+    }
+
+    // 选择选项
+    function selectOption(type, value) {
+      config[type] = value;
+
+      // 更新选中状态
+      const parent = document.getElementById(`options-${type}`);
+      parent.querySelectorAll('.option-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.dataset.value === value) {
+          btn.classList.add('selected');
+        }
+      });
+
+      // 重绘
+      drawAvatar();
+    }
+
+    // 切换配饰
+    function toggleAccessory(acc) {
+      const index = config.accessories.indexOf(acc);
+      if (index > -1) {
+        config.accessories.splice(index, 1);
+      } else if (config.accessories.length < 2) {
+        config.accessories.push(acc);
+      }
+
+      // 更新计数器
+      document.getElementById('accessory-count').textContent = config.accessories.length;
+
+      // 更新按钮状态
+      const btn = document.querySelector(`[data-value="${acc}"]`);
+      if (btn) {
+        btn.classList.toggle('selected', config.accessories.includes(acc));
+      }
+
+      drawAvatar();
+    }
+
+    // 选择配色
+    function selectColor(scheme) {
+      config.colorScheme = scheme;
+
+      // 更新选中状态
+      document.querySelectorAll('.color-option').forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.dataset.value === scheme) {
+          btn.classList.add('selected');
+        }
+      });
+
+      drawAvatar();
+    }
+
+    // 编辑名称
+    function editName() {
+      const currentName = document.getElementById('avatar-name').textContent;
+      const newName = prompt('给小人起个名字:', currentName);
+      if (newName !== null && newName.trim() !== '') {
+        document.getElementById('avatar-name').textContent = newName;
+      }
+    }
+
+    // 保存到衣柜
+    function saveToWardrobe() {
+      const name = document.getElementById('avatar-name').textContent;
+      localStorage.setItem('last-avatar', JSON.stringify(config));
+      localStorage.setItem('last-avatar-name', name);
+      alert('✅ 已保存到衣柜！');
+    }
+
+    // 完成
+    function completeAvatar() {
+      // 保存配置
+      const name = document.getElementById('avatar-name').textContent;
+      localStorage.setItem('last-avatar', JSON.stringify(config));
+      localStorage.setItem('last-avatar-name', name);
+
+      // 绘制到结果页
+      setTimeout(() => {
+        const resultCanvas = document.getElementById('result-avatar');
+        const mainCanvas = document.getElementById('avatar-canvas');
+        const resultCtx = resultCanvas.getContext('2d');
+        resultCtx.drawImage(mainCanvas, 0, 0, 128, 256);
+        document.getElementById('result-name').textContent = name;
+        showPage('page-success');
+      }, 100);
+    }
+
+    // 关闭
+    function closeBuilder() {
+      showPage('page-join');
+    }
+
+    // 页面切换
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+      });
+      document.getElementById(pageId).classList.add('active');
+    }
+
+    // 初始绘制
+    drawAvatar();
+  </script>
+</body>
+</html>
