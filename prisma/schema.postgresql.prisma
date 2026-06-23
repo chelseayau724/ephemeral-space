@@ -1,12 +1,14 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -16,10 +18,10 @@ model Space {
   code        String   @unique // 四位数字暗号
   name        String
   description String?
-  startTime   String
-  endTime     String
-  createdAt   String   @default("")
-  expiresAt   String // 到期销毁时间
+  startTime   DateTime
+  endTime     DateTime
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime // 到期销毁时间
   isArchived  Boolean  @default(false) // 是否存档（仅统计）
 
   // 组织者自定义配置
@@ -46,8 +48,8 @@ model Participant {
   avatarConfig   String? // 8bit像素小人配置（JSON）
   entranceAnswer String? // 入场问题回答
 
-  joinedAt       String   @default("")
-  leftAt         String?
+  joinedAt       DateTime @default(now())
+  leftAt         DateTime?
   isOnline       Boolean  @default(true)
 
   // 关联
@@ -75,7 +77,7 @@ model PersonalArchive {
   participantNickname String
   ootdImageUrl        String? // OOTD图片（保留兼容）
   avatarConfig        String? // 8bit像素小人配置（JSON）
-  visitedAt           String   @default("")
+  visitedAt           DateTime @default(now())
 
   @@index([visitedAt])
 }

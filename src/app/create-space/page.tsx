@@ -115,6 +115,17 @@ export default function CreateSpacePage() {
     setError('')
 
     try {
+      console.log('开始创建空间，参数:', {
+        name,
+        description,
+        startTime,
+        endTime,
+        customFields,
+        entranceQuestion,
+        questionRequired,
+        isArchived
+      })
+
       const res = await fetch('/api/spaces', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -130,16 +141,21 @@ export default function CreateSpacePage() {
         }),
       })
 
+      console.log('API 响应状态:', res.status, res.statusText)
+
       const data = await res.json()
+      console.log('API 响应数据:', data)
 
       if (!res.ok) {
-        throw new Error(data.error || '创建失败')
+        throw new Error(data.error || `创建失败 (${res.status})`)
       }
 
       setCreatedSpace(data.space)
       setStep(4) // 显示成功页面
     } catch (err) {
-      setError(err instanceof Error ? err.message : '创建失败，请重试')
+      console.error('创建空间失败:', err)
+      const errorMessage = err instanceof Error ? err.message : '创建失败，请重试'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -387,6 +403,8 @@ export default function CreateSpacePage() {
                     type="button"
                     onClick={() => {
                       setCustomFields(prev => [...prev, 'question'])
+                      // 立即显示输入框
+                      setEntranceQuestion('')
                     }}
                     className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                   >
@@ -435,12 +453,14 @@ export default function CreateSpacePage() {
 
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={handleBack}
                 className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors"
               >
                 上一步
               </button>
               <button
+                type="button"
                 onClick={handleCreate}
                 disabled={loading}
                 className="flex-1 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
