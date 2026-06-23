@@ -82,7 +82,7 @@ export default function CreateSpacePage() {
       }
     }
 
-    if (currentStep === 2 && customFields.includes('question')) {
+    if (currentStep === 3 && customFields.includes('question')) {
       if (!entranceQuestion.trim()) {
         setError('请输入入场问题')
         return false
@@ -95,7 +95,9 @@ export default function CreateSpacePage() {
   // 下一步
   const handleNext = () => {
     if (validateStep(step)) {
-      setStep(prev => prev + 1)
+      if (step < 3) {
+        setStep(prev => prev + 1)
+      }
     }
   }
 
@@ -219,7 +221,7 @@ export default function CreateSpacePage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   开始时间 <span className="text-red-500">*</span>
@@ -337,108 +339,98 @@ export default function CreateSpacePage() {
           </div>
         )}
 
-        {/* Step 3: 入场问题 */}
+        {/* Step 3: 入场问题与空间生命周期 */}
         {step === 3 && (
           <div className="bg-white rounded-2xl shadow-sm p-8 space-y-6">
-            <h2 className="text-xl font-semibold text-slate-800">入场问题</h2>
+            <h2 className="text-xl font-semibold text-slate-800">最后配置</h2>
 
-            {customFields.includes('question') ? (
-              <>
-                <p className="text-sm text-slate-500">
-                  设置一个问题，让参与者在进入空间时回答。这有助于开启对话。
-                </p>
+            {/* 入场问题配置 */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-slate-600">入场问题</h3>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    问题内容 <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    value={entranceQuestion}
-                    onChange={e => setEntranceQuestion(e.target.value)}
-                    placeholder="例如：最近让你印象深刻的一本书是什么？"
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-slate-400 focus:outline-none transition-colors resize-none"
-                  />
+              {customFields.includes('question') ? (
+                <>
+                  <p className="text-sm text-slate-500">
+                    设置一个问题，让参与者在进入空间时回答。
+                  </p>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      问题内容 <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={entranceQuestion}
+                      onChange={e => setEntranceQuestion(e.target.value)}
+                      placeholder="例如：最近让你印象深刻的一本书是什么？"
+                      rows={3}
+                      className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-slate-400 focus:outline-none transition-colors resize-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="questionRequired"
+                      checked={questionRequired}
+                      onChange={e => setQuestionRequired(e.target.checked)}
+                      className="w-5 h-5 rounded border-slate-300"
+                    />
+                    <label htmlFor="questionRequired" className="text-sm text-slate-700">
+                      设为必答（参与者必须回答才能进入）
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-6 bg-slate-50 rounded-lg">
+                  <p className="text-slate-500 mb-3">未启用入场问题</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomFields(prev => [...prev, 'question'])
+                    }}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    + 添加入场问题
+                  </button>
                 </div>
+              )}
+            </div>
 
-                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
-                  <input
-                    type="checkbox"
-                    id="questionRequired"
-                    checked={questionRequired}
-                    onChange={e => setQuestionRequired(e.target.checked)}
-                    className="w-5 h-5 rounded border-slate-300"
-                  />
-                  <label htmlFor="questionRequired" className="text-sm text-slate-700">
-                    设为必答（参与者必须回答才能进入）
-                  </label>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-slate-500 mb-4">未启用入场问题</p>
+            {/* 空间生命周期配置 */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-slate-600">空间生命周期</h3>
+
+              <div className="space-y-3">
                 <button
-                  onClick={() => {
-                    setCustomFields(prev => [...prev, 'question'])
-                    setStep(2)
-                  }}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  type="button"
+                  onClick={() => setIsArchived(false)}
+                  className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                    !isArchived
+                      ? 'bg-blue-50 border-blue-300'
+                      : 'bg-white border-slate-200 hover:border-slate-300'
+                  }`}
                 >
-                  返回添加
+                  <div className="font-medium text-slate-800 mb-1">⏳ 到时自动消失</div>
+                  <div className="text-sm text-slate-500">
+                    活动结束后 24 小时自动销毁，不留存任何数据
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsArchived(true)}
+                  className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                    isArchived
+                      ? 'bg-blue-50 border-blue-300'
+                      : 'bg-white border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="font-medium text-slate-800 mb-1">📥 保留为存档</div>
+                  <div className="text-sm text-slate-500">
+                    仅保留统计级数据（人数、场域状态曲线），不保存任何个人名片内容
+                  </div>
                 </button>
               </div>
-            )}
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleBack}
-                className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors"
-              >
-                上一步
-              </button>
-              <button
-                onClick={handleNext}
-                className="flex-1 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-colors"
-              >
-                下一步
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3b: 空间生命周期 */}
-        {step === 3 && !customFields.includes('question') && (
-          <div className="bg-white rounded-2xl shadow-sm p-8 space-y-6">
-            <h2 className="text-xl font-semibold text-slate-800">空间生命周期</h2>
-
-            <div className="space-y-3">
-              <button
-                onClick={() => setIsArchived(false)}
-                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
-                  !isArchived
-                    ? 'bg-blue-50 border-blue-300'
-                    : 'bg-white border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="font-medium text-slate-800 mb-1">⏳ 到时自动消失</div>
-                <div className="text-sm text-slate-500">
-                  活动结束后 24 小时自动销毁，不留存任何数据
-                </div>
-              </button>
-
-              <button
-                onClick={() => setIsArchived(true)}
-                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
-                  isArchived
-                    ? 'bg-blue-50 border-blue-300'
-                    : 'bg-white border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="font-medium text-slate-800 mb-1">📥 保留为存档</div>
-                <div className="text-sm text-slate-500">
-                  仅保留统计级数据（人数、场域状态曲线），不保存任何个人名片内容
-                </div>
-              </button>
             </div>
 
             <div className="flex gap-3">
